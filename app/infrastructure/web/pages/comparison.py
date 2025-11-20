@@ -1,5 +1,5 @@
 from dependency_injector.wiring import inject, Provide
-from nicegui import ui, events
+from nicegui import ui, events, run
 from typing import Annotated
 from fastapi import Depends
 from app.adapters.gateways.repo_gateway_selector import RepoGatewaySelector
@@ -40,7 +40,7 @@ async def comparison_page(
         else:
             try:
                 # Fetch repo summary
-                summary = use_case.execute(source)
+                summary = await run.cpu_bound(use_case.execute, source)
 
                 # Add to list
                 state["repos_info"][source.id] = summary
