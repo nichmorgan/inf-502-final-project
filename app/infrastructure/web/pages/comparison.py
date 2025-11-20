@@ -1,9 +1,11 @@
 from dependency_injector.wiring import inject, Provide
-from nicegui import ui
+from nicegui import ui, events
 from typing import Annotated
 from fastapi import Depends
 from app.adapters.gateways.repo_gateway_selector import RepoGatewaySelector
 from app.containers import Container
+from app.domain.entities.repo import RepoSourceEntity, RepoSummaryEntity
+from app.infrastructure.web.components.repos_table import repos_table_component
 from app.use_cases.get_repo_summary import GetRepoSummaryUseCase
 
 __all__ = ["comparison_page"]
@@ -11,7 +13,7 @@ __all__ = ["comparison_page"]
 
 @ui.page("/")
 @inject
-def comparison_page(
+async def comparison_page(
     use_case: Annotated[
         GetRepoSummaryUseCase, Depends(Provide[Container.get_repo_summary_use_case])
     ],
@@ -21,162 +23,51 @@ def comparison_page(
 ) -> None:
     """Create and render the repository comparison page."""
 
-    # State
-    repos: list[dict] = []
-
-    def render_table() -> None:
-        """Render the comparison table."""
-        table_container.clear()
-
-        with table_container:
-            if not repos:
-                ui.label(
-                    "No repositories added yet. Add repositories using the form above."
-                ).classes("text-gray-500")
-                return
-
-            # Create table columns
-            columns = [
-                {
-                    "name": "provider",
-                    "label": "Provider",
-                    "field": "provider",
-                    "align": "left",
-                },
-                {"name": "owner", "label": "Owner", "field": "owner", "align": "left"},
-                {
-                    "name": "repo",
-                    "label": "Repository",
-                    "field": "repo",
-                    "align": "left",
-                },
-                {
-                    "name": "open_prs",
-                    "label": "Open PRs",
-                    "field": "open_prs",
-                    "align": "center",
-                },
-                {
-                    "name": "closed_prs",
-                    "label": "Closed PRs",
-                    "field": "closed_prs",
-                    "align": "center",
-                },
-                {
-                    "name": "oldest_pr",
-                    "label": "Oldest PR Date",
-                    "field": "oldest_pr",
-                    "align": "center",
-                },
-                {
-                    "name": "users",
-                    "label": "Contributors",
-                    "field": "users",
-                    "align": "center",
-                },
-                {
-                    "name": "actions",
-                    "label": "Actions",
-                    "field": "actions",
-                    "align": "center",
-                },
-            ]
-
-            # Create table rows
-            rows = [
-                {
-                    "provider": repo["provider"],
-                    "owner": repo["owner"],
-                    "repo": repo["repo"],
-                    "open_prs": repo["open_prs"],
-                    "closed_prs": repo["closed_prs"],
-                    "oldest_pr": repo["oldest_pr"],
-                    "users": repo["users"],
-                    "actions": repo["id"],
-                }
-                for repo in repos
-            ]
-
-            # Create table
-            table = ui.table(columns=columns, rows=rows, row_key="actions").classes(
-                "w-full"
-            )
-
-            # Add action button slot
-            table.add_slot(
-                "body-cell-actions",
-                r"""
-                <q-td :props="props">
-                    <q-btn
-                        flat
-                        dense
-                        round
-                        icon="delete"
-                        color="negative"
-                        @click="$parent.$emit('remove', props.row.actions)"
-                    />
-                </q-td>
-                """,
-            )
-
-            # Handle remove events
-            table.on("remove", lambda e: remove_repo(e.args))
-
-    def add_repo(provider: str, owner: str, repo: str) -> None:
+    async def add_source(event: events.ClickEventArguments) -> None:
         """Add a repository to the comparison table."""
-        nonlocal repos
+        nonlocal repos_info
 
-        if not provider or not owner or not repo:
-            ui.notify("Please fill in all fields", type="warning")
-            return
+        source = RepoSourceEntity(
+            provider=provider_select.value or "",
+            owner=owner_input.value.strip(),
+            repo=repo_input.value.strip(),
+        )
 
-        # Check if repo already exists
-        repo_id = f"{provider}/{owner}/{repo}"
-        if any(r["id"] == repo_id for r in repos):
+        if source.id in repos_info:
             ui.notify("Repository already added", type="warning")
             return
 
         try:
             # Fetch repo summary
-            summary = use_case.execute(provider, owner, repo)
+            summary = use_case.execute(source)
 
             # Add to list
-            repos.append(
-                {
-                    "id": repo_id,
-                    "provider": provider.upper(),
-                    "owner": owner,
-                    "repo": repo,
-                    "open_prs": summary.pull_requests.open_count,
-                    "closed_prs": summary.pull_requests.closed_count,
-                    "oldest_pr": (
-                        summary.pull_requests.oldest_date.strftime("%Y-%m-%d")
-                        if summary.pull_requests.oldest_date
-                        else "N/A"
-                    ),
-                    "users": summary.users.count,
-                }
-            )
+            repos_info[source.id] = summary
+            await repos_table_component.refresh(repos_info.values())
 
-            # Update table
-            render_table()
-            ui.notify(f"Added {repo_id}", type="positive")
+            ui.notify(f"Added {source.id}", type="positive")
 
         except ValueError as e:
             if "Unsupported URL" in str(e):
-                ui.notify(f"Provider '{provider}' is not supported", type="negative")
+                ui.notify(
+                    f"Provider '{source.provider}' is not supported", type="negative"
+                )
             else:
                 ui.notify(f"Error: {str(e)}", type="negative")
         except Exception as e:
             ui.notify(f"Error fetching repository data: {str(e)}", type="negative")
 
-    def remove_repo(repo_id: str) -> None:
+    async def remove_source(event: events.GenericEventArguments) -> None:
         """Remove a repository from the comparison."""
-        nonlocal repos
+        nonlocal repos_info
 
-        repos = [r for r in repos if r["id"] != repo_id]
-        render_table()
-        ui.notify(f"Removed {repo_id}", type="info")
+        repo_id = event.args
+
+        del repos_info[repo_id]
+        await repos_table_component.refresh(repos_info.values())
+
+    # State
+    repos_info: dict[str, RepoSummaryEntity] = {}
 
     # Render UI
     ui.label("Repository Comparison").classes("text-3xl font-bold mb-4")
@@ -203,21 +94,6 @@ def comparison_page(
                 label="Repository", placeholder="e.g., linux"
             ).classes("flex-1")
 
-            ui.button(
-                "Add Repository",
-                on_click=lambda: add_repo(
-                    provider_select.value or "",
-                    owner_input.value.strip(),
-                    repo_input.value.strip(),
-                ),
-            ).props("color=primary")
+            ui.button("Add Repository", on_click=add_source).props("color=primary")
 
-    # Comparison table
-    with ui.card().classes("w-full"):
-        ui.label("Comparison Table").classes("text-xl font-semibold mb-4")
-        # Create table container (empty but existing)
-        table_container = ui.column().classes("w-full")
-        with table_container:
-            ui.label(
-                "No repositories added yet. Add repositories using the form above."
-            ).classes("text-gray-500")
+    repos_table_component(on_remove=remove_source)

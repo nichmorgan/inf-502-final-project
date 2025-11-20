@@ -1,25 +1,36 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, field_validator
+
 
 __all__ = [
-    "PullRequestSummaryEntity",
-    "UsersSummaryEntity",
     "RepoSummaryEntity",
+    "RepoSourceEntity",
 ]
 
 
-class PullRequestSummaryEntity(BaseModel):
-    open_count: int = Field(..., description="Number of open pull requests")
-    closed_count: int = Field(..., description="Number of closed pull requests")
-    oldest_date: datetime | None
+class RepoSourceEntity(BaseModel):
+    provider: str
+    owner: str
+    repo: str
+
+    @computed_field
+    @property
+    def id(self) -> str:
+        return f"{self.provider}/{self.owner}/{self.repo}"
 
 
-class UsersSummaryEntity(BaseModel):
-    count: int = Field(..., description="Number of users")
+class RepoSummaryEntity(RepoSourceEntity):
+    open_prs: int = Field(description="Number of open pull requests")
+    closed_prs: int = Field(description="Number of closed pull requests")
+    oldest_pr: str | None = Field(description="Oldest pull request date")
+    users: int = Field(description="Number of users")
 
-
-class RepoSummaryEntity(BaseModel):
-    pull_requests: PullRequestSummaryEntity = Field(
-        ..., description="Pull requests summary"
-    )
-    users: UsersSummaryEntity = Field(..., description="Users summary")
+    @field_validator("oldest_pr", mode="before")
+    @classmethod
+    def _validate_oldest_pr(cls, v) -> str:
+        if not v:
+            return "N/A"
+        if isinstance(v, datetime):
+            return v.strftime("%Y-%m-%d")
+        return v
