@@ -12,7 +12,7 @@ from app.use_cases.ports.repo_port import RepoPort
 def mock_gateway_class(mocker: MockerFixture):
     """Mock gateway class that will be returned by the selector."""
     gateway_class = mocker.MagicMock()
-    gateway_class.provider = "github"
+    gateway_class.provider_name = "github"
     return gateway_class
 
 
@@ -230,7 +230,7 @@ def test_execute_raises_error_for_unsupported_provider(
     mock_gateway_selector.select_gateway.return_value = None  # type: ignore
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Unsupported URL"):
+    with pytest.raises(ValueError, match="Unsupported provider"):
         use_case.execute(provider=provider, owner=owner, repo=repo)
 
     mock_gateway_selector.select_gateway.assert_called_once_with(provider)  # type: ignore

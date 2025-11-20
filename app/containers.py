@@ -5,12 +5,18 @@ from app.adapters import GithubGateway, RepoGatewaySelector
 
 
 class Container(containers.DeclarativeContainer):
-    config = providers.Configuration()
-
     github_client = providers.Singleton(Github)
+
     github_gateway = providers.Factory(GithubGateway, client=github_client)
 
-    repo_gateway_selector = providers.Singleton(RepoGatewaySelector, github_gateway)
+    repo_gateway_selector = providers.Singleton(
+        RepoGatewaySelector,
+        providers.Dict(
+            {
+                "github": github_gateway.provider,
+            }
+        ),
+    )
 
     get_repo_summary_use_case = providers.Singleton(
         GetRepoSummaryUseCase,

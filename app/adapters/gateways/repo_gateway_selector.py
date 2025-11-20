@@ -1,16 +1,18 @@
-from typing import Type
+from typing import Callable
 from app.use_cases.ports.repo_port import RepoPort
 
 __all__ = ["RepoGatewaySelector"]
 
+GatewayCallable = Callable[[str, str], RepoPort]
+
 
 class RepoGatewaySelector:
-    def __init__(self, *gateways: Type[RepoPort]) -> None:
-        self.__providers_map = {str(gateway.provider): gateway for gateway in gateways}
+    def __init__(self, gateways_map: dict[str, GatewayCallable] = {}) -> None:
+        self.__gateways_map = gateways_map
 
     @property
     def providers(self) -> list[str]:
-        return list(self.__providers_map.keys())
+        return list(self.__gateways_map.keys())
 
-    def select_gateway(self, provider: str) -> Type[RepoPort] | None:
-        return self.__providers_map.get(provider)
+    def select_gateway(self, provider: str) -> GatewayCallable | None:
+        return self.__gateways_map.get(provider)

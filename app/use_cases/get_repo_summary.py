@@ -11,7 +11,7 @@ class GetRepoSummaryUseCase:
     def execute(self, provider: str, owner: str, repo: str) -> RepoSummaryEntity:
         gateway_factory = self.__selector.select_gateway(provider)
         if not gateway_factory:
-            raise ValueError("Unsupported URL")
+            raise ValueError("Unsupported provider")
 
         gateway = gateway_factory(owner, repo)
         open_prs = gateway.get_open_pull_requests_count()

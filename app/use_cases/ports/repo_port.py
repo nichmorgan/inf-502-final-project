@@ -5,8 +5,6 @@ __all__ = ["RepoPort"]
 
 
 class RepoPort(ABC):
-    provider: str
-
     def __init__(self, owner: str, repo: str) -> None:
         self._owner = owner
         self._repo = repo

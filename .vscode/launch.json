@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Module",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "app.infrastructure.web.main"
+        },
+        {
             "name": "Web",
             "type": "debugpy",
             "request": "launch",

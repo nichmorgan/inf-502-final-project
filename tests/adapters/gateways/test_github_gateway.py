@@ -13,7 +13,7 @@ def mock_github_client(mocker: MockerFixture):
 
 @pytest.fixture
 def github_gateway(mock_github_client: MockerFixture):
-    return GithubGateway(client=mock_github_client, owner="test_owner", repo="test_repo")  # type: ignore
+    return GithubGateway("test_owner", "test_repo", client=mock_github_client)  # type: ignore
 
 
 def test_get_open_pull_requests_count(
@@ -95,14 +95,6 @@ def test_get_oldest_pull_request_date_no_prs(
     mock_repo.get_pulls.assert_called_once_with(sort="created", direction="asc")
 
 
-def test_provider_property(github_gateway: GithubGateway):
-    # Act
-    provider = github_gateway.provider
-
-    # Assert
-    assert provider == "github"
-
-
 def test_github_gateway_initializes_repo_correctly(
     mock_github_client: MockerFixture,
 ):
@@ -111,7 +103,7 @@ def test_github_gateway_initializes_repo_correctly(
     repo = "test_repo"
 
     # Act
-    gateway = GithubGateway(client=mock_github_client, owner=owner, repo=repo)  # type: ignore
+    gateway = GithubGateway(owner, repo, client=mock_github_client)  # type: ignore
 
     # Assert
     mock_github_client.get_repo.assert_called_once_with(f"{owner}/{repo}", lazy=True)  # type: ignore

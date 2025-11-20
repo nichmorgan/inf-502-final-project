@@ -1,5 +1,4 @@
 from datetime import datetime
-from urllib.parse import urlparse
 from github import Github
 from app.use_cases.ports.repo_port import RepoPort
 
@@ -7,9 +6,7 @@ __all__ = ["GithubGateway"]
 
 
 class GithubGateway(RepoPort):
-    provider = "github"
-
-    def __init__(self, client: Github, owner: str, repo: str) -> None:
+    def __init__(self, owner: str, repo: str, *, client: Github) -> None:
         super().__init__(owner, repo)
         self.__repo = client.get_repo(f"{owner}/{repo}", lazy=True)
 

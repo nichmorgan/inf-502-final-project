@@ -1,16 +1,23 @@
 from dependency_injector.wiring import inject, Provide
 from nicegui import ui
-from app.use_cases import GetRepoSummaryUseCase
+from typing import Annotated
+from fastapi import Depends
 from app.adapters.gateways.repo_gateway_selector import RepoGatewaySelector
 from app.containers import Container
+from app.use_cases.get_repo_summary import GetRepoSummaryUseCase
 
-__all__ = ["create_comparison_page"]
+__all__ = ["comparison_page"]
 
 
+@ui.page("/")
 @inject
-def create_comparison_page(
-    use_case: GetRepoSummaryUseCase = Provide[Container.get_repo_summary_use_case],
-    gateway_selector: RepoGatewaySelector = Provide[Container.repo_gateway_selector],
+def comparison_page(
+    use_case: Annotated[
+        GetRepoSummaryUseCase, Depends(Provide[Container.get_repo_summary_use_case])
+    ],
+    gateway_selector: Annotated[
+        RepoGatewaySelector, Depends(Provide[Container.repo_gateway_selector])
+    ],
 ) -> None:
     """Create and render the repository comparison page."""
 
