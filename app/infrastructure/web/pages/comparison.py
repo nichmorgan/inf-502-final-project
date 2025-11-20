@@ -25,7 +25,9 @@ async def comparison_page(
 
     async def add_source(event: events.ClickEventArguments) -> None:
         """Add a repository to the comparison table."""
-        nonlocal repos_info
+        nonlocal state
+
+        state["is_loading_source"] = True
 
         source = RepoSourceEntity(
             provider=provider_select.value or "",
@@ -33,41 +35,46 @@ async def comparison_page(
             repo=repo_input.value.strip(),
         )
 
-        if source.id in repos_info:
+        if source.id in state["repos_info"]:
             ui.notify("Repository already added", type="warning")
-            return
+        else:
+            try:
+                # Fetch repo summary
+                summary = use_case.execute(source)
 
-        try:
-            # Fetch repo summary
-            summary = use_case.execute(source)
+                # Add to list
+                state["repos_info"][source.id] = summary
+                await repos_table_component.refresh(state["repos_info"].values())
 
-            # Add to list
-            repos_info[source.id] = summary
-            await repos_table_component.refresh(repos_info.values())
+                ui.notify(f"Added {source.id}", type="positive")
 
-            ui.notify(f"Added {source.id}", type="positive")
+            except ValueError as e:
+                if "Unsupported URL" in str(e):
+                    ui.notify(
+                        f"Provider '{source.provider}' is not supported",
+                        type="negative",
+                    )
+                else:
+                    ui.notify(f"Error: {str(e)}", type="negative")
+            except Exception as e:
+                ui.notify(f"Error fetching repository data: {str(e)}", type="negative")
 
-        except ValueError as e:
-            if "Unsupported URL" in str(e):
-                ui.notify(
-                    f"Provider '{source.provider}' is not supported", type="negative"
-                )
-            else:
-                ui.notify(f"Error: {str(e)}", type="negative")
-        except Exception as e:
-            ui.notify(f"Error fetching repository data: {str(e)}", type="negative")
+        state["is_loading_source"] = False
 
     async def remove_source(event: events.GenericEventArguments) -> None:
         """Remove a repository from the comparison."""
-        nonlocal repos_info
+        nonlocal state
 
         repo_id = event.args
 
-        del repos_info[repo_id]
-        await repos_table_component.refresh(repos_info.values())
+        del state["repos_info"][repo_id]
+        await repos_table_component.refresh(state["repos_info"].values())
 
     # State
-    repos_info: dict[str, RepoSummaryEntity] = {}
+    state = {
+        "repos_info": {},
+        "is_loading_source": False,
+    }
 
     # Render UI
     ui.label("Repository Comparison").classes("text-3xl font-bold mb-4")
@@ -94,6 +101,16 @@ async def comparison_page(
                 label="Repository", placeholder="e.g., linux"
             ).classes("flex-1")
 
-            ui.button("Add Repository", on_click=add_source).props("color=primary")
+            ui.button("Add Repository", on_click=add_source).props(
+                "color=primary"
+            ).bind_enabled_from(
+                state, "is_loading_source", lambda v: not v
+            ).bind_visibility_from(
+                state, "is_loading_source", lambda v: not v
+            )
+
+            ui.spinner().classes("ml-2").bind_visibility_from(
+                state, "is_loading_source"
+            )
 
     repos_table_component(on_remove=remove_source)

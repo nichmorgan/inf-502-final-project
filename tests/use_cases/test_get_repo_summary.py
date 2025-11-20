@@ -3,7 +3,8 @@ from datetime import datetime
 import pytest
 from pytest_mock import MockerFixture
 
-from app.domain import RepoSummaryEntity, PullRequestSummaryEntity, UsersSummaryEntity
+from app.domain import RepoSummaryEntity
+from app.domain.entities.repo import RepoSourceEntity
 from app.use_cases import GetRepoSummaryUseCase
 from app.use_cases.ports.repo_port import RepoPort
 
@@ -57,14 +58,16 @@ def test_execute_with_all_data(
     mock_gateway_instance.get_users_count.return_value = 15  # type: ignore
 
     # Act
-    result = use_case.execute(provider=provider, owner=owner, repo=repo)
+    result = use_case.execute(
+        RepoSourceEntity(provider=provider, owner=owner, repo=repo)
+    )
 
     # Assert
     assert isinstance(result, RepoSummaryEntity)
-    assert result.pull_requests.open_count == 5
-    assert result.pull_requests.closed_count == 10
-    assert result.pull_requests.oldest_date == oldest_date
-    assert result.users.count == 15
+    assert result.open_prs == 5
+    assert result.closed_prs == 10
+    assert result.oldest_pr == oldest_date.strftime("%Y-%m-%d")
+    assert result.users == 15
 
     # Verify selector was called with correct provider
     mock_gateway_selector.select_gateway.assert_called_once_with(provider)  # type: ignore
@@ -94,14 +97,16 @@ def test_execute_with_no_oldest_pr_date(
     mock_gateway_instance.get_users_count.return_value = 8  # type: ignore
 
     # Act
-    result = use_case.execute(provider=provider, owner=owner, repo=repo)
+    result = use_case.execute(
+        RepoSourceEntity(provider=provider, owner=owner, repo=repo)
+    )
 
     # Assert
     assert isinstance(result, RepoSummaryEntity)
-    assert result.pull_requests.open_count == 3
-    assert result.pull_requests.closed_count == 7
-    assert result.pull_requests.oldest_date is None
-    assert result.users.count == 8
+    assert result.open_prs == 3
+    assert result.closed_prs == 7
+    assert result.oldest_pr is None
+    assert result.users == 8
 
 
 def test_execute_with_zero_counts(
@@ -119,42 +124,16 @@ def test_execute_with_zero_counts(
     mock_gateway_instance.get_users_count.return_value = 0  # type: ignore
 
     # Act
-    result = use_case.execute(provider=provider, owner=owner, repo=repo)
+    result = use_case.execute(
+        RepoSourceEntity(provider=provider, owner=owner, repo=repo)
+    )
 
     # Assert
     assert isinstance(result, RepoSummaryEntity)
-    assert result.pull_requests.open_count == 0
-    assert result.pull_requests.closed_count == 0
-    assert result.pull_requests.oldest_date is None
-    assert result.users.count == 0
-
-
-def test_execute_returns_correct_entity_structure(
-    use_case: GetRepoSummaryUseCase,
-    mock_gateway_instance: MockerFixture,
-):
-    # Arrange
-    provider = "github"
-    owner = "test_owner"
-    repo = "test_repo"
-
-    mock_gateway_instance.get_open_pull_requests_count.return_value = 2  # type: ignore
-    mock_gateway_instance.get_closed_pull_requests_count.return_value = 3  # type: ignore
-    mock_gateway_instance.get_oldest_pull_request_date.return_value = datetime(  # type: ignore
-        2024, 6, 15
-    )
-    mock_gateway_instance.get_users_count.return_value = 5  # type: ignore
-
-    # Act
-    result = use_case.execute(provider=provider, owner=owner, repo=repo)
-
-    # Assert
-    assert isinstance(result.pull_requests, PullRequestSummaryEntity)
-    assert isinstance(result.users, UsersSummaryEntity)
-    assert hasattr(result.pull_requests, "open_count")
-    assert hasattr(result.pull_requests, "closed_count")
-    assert hasattr(result.pull_requests, "oldest_date")
-    assert hasattr(result.users, "count")
+    assert result.open_prs == 0
+    assert result.closed_prs == 0
+    assert result.oldest_pr is None
+    assert result.users == 0
 
 
 def test_execute_with_large_numbers(
@@ -174,13 +153,15 @@ def test_execute_with_large_numbers(
     mock_gateway_instance.get_users_count.return_value = 500  # type: ignore
 
     # Act
-    result = use_case.execute(provider=provider, owner=owner, repo=repo)
+    result = use_case.execute(
+        RepoSourceEntity(provider=provider, owner=owner, repo=repo)
+    )
 
     # Assert
-    assert result.pull_requests.open_count == 1000
-    assert result.pull_requests.closed_count == 5000
-    assert result.pull_requests.oldest_date == datetime(2020, 1, 1)
-    assert result.users.count == 500
+    assert result.open_prs == 1000
+    assert result.closed_prs == 5000
+    assert result.oldest_pr == "2020-01-01"
+    assert result.users == 500
 
 
 def test_execute_gateway_interaction_order(
@@ -207,7 +188,9 @@ def test_execute_gateway_interaction_order(
     )
 
     # Act
-    result = use_case.execute(provider=provider, owner=owner, repo=repo)
+    result = use_case.execute(
+        RepoSourceEntity(provider=provider, owner=owner, repo=repo)
+    )
 
     # Assert
     assert result is not None
@@ -231,7 +214,7 @@ def test_execute_raises_error_for_unsupported_provider(
 
     # Act & Assert
     with pytest.raises(ValueError, match="Unsupported provider"):
-        use_case.execute(provider=provider, owner=owner, repo=repo)
+        use_case.execute(RepoSourceEntity(provider=provider, owner=owner, repo=repo))
 
     mock_gateway_selector.select_gateway.assert_called_once_with(provider)  # type: ignore
 
@@ -253,12 +236,14 @@ def test_execute_creates_correct_entity_hierarchy(
     mock_gateway_instance.get_users_count.return_value = 30  # type: ignore
 
     # Act
-    result = use_case.execute(provider=provider, owner=owner, repo=repo)
+    result = use_case.execute(
+        RepoSourceEntity(provider=provider, owner=owner, repo=repo)
+    )
 
     # Assert
     # Verify the entity structure is correctly composed
     assert isinstance(result, RepoSummaryEntity)
-    assert result.pull_requests.open_count == 10
-    assert result.pull_requests.closed_count == 20
-    assert result.pull_requests.oldest_date == datetime(2023, 5, 1)
-    assert result.users.count == 30
+    assert result.open_prs == 10
+    assert result.closed_prs == 20
+    assert result.oldest_pr == "2023-05-01"
+    assert result.users == 30

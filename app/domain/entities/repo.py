@@ -29,8 +29,6 @@ class RepoSummaryEntity(RepoSourceEntity):
     @field_validator("oldest_pr", mode="before")
     @classmethod
     def _validate_oldest_pr(cls, v) -> str:
-        if not v:
-            return "N/A"
         if isinstance(v, datetime):
             return v.strftime("%Y-%m-%d")
         return v

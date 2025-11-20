@@ -59,7 +59,8 @@ def repo_info_to_raw_table(info_list: list[RepoSummaryEntity]):
 
     rows = [
         {
-            **info.model_dump(exclude={"id"}),
+            **info.model_dump(exclude={"id", "oldest_pr"}),
+            "oldest_pr": info.oldest_pr or "N/A",
             "actions": info.id,
         }
         for info in info_list
