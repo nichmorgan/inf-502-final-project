@@ -19,6 +19,11 @@ class RepoSourceEntity(BaseModel):
     def id(self) -> str:
         return f"{self.provider}/{self.owner}/{self.repo}"
 
+    @computed_field
+    @property
+    def full_name(self) -> str:
+        return f"{self.owner}/{self.repo}"
+
 
 class RepoSummaryEntity(RepoSourceEntity):
     open_prs: int = Field(description="Number of open pull requests")
@@ -32,3 +37,12 @@ class RepoSummaryEntity(RepoSourceEntity):
         if isinstance(v, datetime):
             return v.strftime("%Y-%m-%d")
         return v
+
+    @computed_field
+    @property
+    def days_since_oldest_pr(self) -> int | None:
+        if self.oldest_pr is None:
+            return None
+        oldest_date = datetime.strptime(self.oldest_pr, "%Y-%m-%d")
+        delta = datetime.now() - oldest_date
+        return delta.days

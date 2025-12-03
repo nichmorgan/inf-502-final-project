@@ -17,9 +17,7 @@ def main() -> None:
     ui.run(
         root=comparison_page,
         title="Repository Comparison",
-        port=8080,
-        reload=False,
-        show=False,
+        port=5000,
     )
 
 

@@ -8,7 +8,7 @@ __all__ = ["GithubGateway"]
 class GithubGateway(RepoPort):
     def __init__(self, owner: str, repo: str, *, client: Github) -> None:
         super().__init__(owner, repo)
-        self.__repo = client.get_repo(f"{owner}/{repo}", lazy=True)
+        self.__repo = client.get_repo(f"{owner}/{repo}", lazy=False)
 
     def get_open_pull_requests_count(self) -> int:
         return self.__repo.get_pulls(state="open").totalCount

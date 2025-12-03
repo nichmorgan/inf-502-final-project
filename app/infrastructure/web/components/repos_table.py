@@ -5,7 +5,7 @@ from app.domain.entities.repo import RepoSummaryEntity
 __all__ = ["repos_table_component"]
 
 
-def repo_info_to_raw_table(info_list: list[RepoSummaryEntity]):
+def repo_info_to_raw_table_component(info_list: list[RepoSummaryEntity]):
     columns = [
         {
             "name": "provider",
@@ -84,7 +84,7 @@ def repos_table_component(
                 ui.label(empty_message).classes("text-gray-500")
                 return
 
-            columns, rows = repo_info_to_raw_table(repos)
+            columns, rows = repo_info_to_raw_table_component(repos)
             table = (
                 ui.table(columns=columns, rows=rows, row_key="actions")
                 .classes("w-full")

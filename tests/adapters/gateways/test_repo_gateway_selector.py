@@ -46,9 +46,11 @@ class MockBitbucketGateway(RepoPort):
 @pytest.fixture
 def mock_github_factory(mocker):
     """Factory function that returns a mock GithubGateway."""
+
     def factory(owner: str, repo: str):
         mock_client = mocker.MagicMock()
         return GithubGateway(owner, repo, client=mock_client)
+
     return factory
 
 
@@ -59,11 +61,13 @@ def selector_with_github_only(mock_github_factory) -> RepoGatewaySelector:
 
 @pytest.fixture
 def selector_with_multiple_gateways(mock_github_factory) -> RepoGatewaySelector:
-    return RepoGatewaySelector({
-        "github": mock_github_factory,
-        "gitlab": MockGitlabGateway,
-        "bitbucket": MockBitbucketGateway,
-    })
+    return RepoGatewaySelector(
+        {
+            "github": mock_github_factory,
+            "gitlab": MockGitlabGateway,
+            "bitbucket": MockBitbucketGateway,
+        }
+    )
 
 
 def test_select_gateway_returns_github_for_github_provider(
@@ -138,11 +142,13 @@ def test_selector_with_no_gateways():
 
 def test_selector_providers_property():
     # Arrange
-    selector = RepoGatewaySelector({
-        "github": MockGitlabGateway,
-        "gitlab": MockGitlabGateway,
-        "bitbucket": MockBitbucketGateway,
-    })
+    selector = RepoGatewaySelector(
+        {
+            "github": MockGitlabGateway,
+            "gitlab": MockGitlabGateway,
+            "bitbucket": MockBitbucketGateway,
+        }
+    )
 
     # Act
     providers = selector.providers

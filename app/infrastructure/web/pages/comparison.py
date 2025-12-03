@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import Depends
 from app.adapters.gateways.repo_gateway_selector import RepoGatewaySelector
 from app.containers import Container
-from app.domain.entities.repo import RepoSourceEntity, RepoSummaryEntity
+from app.domain.entities.repo import RepoSourceEntity
+from app.infrastructure.web.components.repos_graph import repos_graph_component
 from app.infrastructure.web.components.repos_table import repos_table_component
 from app.use_cases.get_repo_summary import GetRepoSummaryUseCase
 
@@ -45,6 +46,7 @@ async def comparison_page(
                 # Add to list
                 state["repos_info"][source.id] = summary
                 await repos_table_component.refresh(state["repos_info"].values())
+                await repos_graph_component.refresh(state["repos_info"].values())
 
                 ui.notify(f"Added {source.id}", type="positive")
 
@@ -113,4 +115,5 @@ async def comparison_page(
                 state, "is_loading_source"
             )
 
+    repos_graph_component(state["repos_info"].values())
     repos_table_component(on_remove=remove_source)
