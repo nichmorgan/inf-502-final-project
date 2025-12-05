@@ -24,10 +24,14 @@ async def comparison_page(
 ) -> None:
     """Create and render the repository comparison page."""
 
+    # Initialize state
+    state = {
+        "repos_info": {},
+        "is_loading_source": False,
+    }
+
     async def add_source(event: events.ClickEventArguments) -> None:
         """Add a repository to the comparison table."""
-        nonlocal state
-
         state["is_loading_source"] = True
 
         source = RepoSourceEntity(
@@ -40,11 +44,9 @@ async def comparison_page(
             ui.notify("Repository already added", type="warning")
         else:
             try:
-                # Fetch repo summary
                 summary = await run.cpu_bound(use_case.execute, source)
-
-                # Add to list
                 state["repos_info"][source.id] = summary
+
                 await repos_table_component.refresh(state["repos_info"].values())
                 await repos_graph_component.refresh(state["repos_info"].values())
 
@@ -65,20 +67,13 @@ async def comparison_page(
 
     async def remove_source(event: events.GenericEventArguments) -> None:
         """Remove a repository from the comparison."""
-        nonlocal state
-
         repo_id = event.args
-
         del state["repos_info"][repo_id]
+
         await repos_table_component.refresh(state["repos_info"].values())
+        await repos_graph_component.refresh(state["repos_info"].values())
 
-    # State
-    state = {
-        "repos_info": {},
-        "is_loading_source": False,
-    }
-
-    # Render UI
+    # Page header
     ui.label("Repository Comparison").classes("text-3xl font-bold mb-4")
 
     # Input form
@@ -89,18 +84,17 @@ async def comparison_page(
             provider_select = ui.select(
                 label="Provider",
                 options=gateway_selector.providers,
-                value=(
-                    gateway_selector.providers[0]
-                    if gateway_selector.providers
-                    else None
-                ),
+                value=gateway_selector.providers[0] if gateway_selector.providers else None,
             ).classes("flex-1")
 
-            owner_input = ui.input(label="Owner", placeholder="e.g., torvalds").classes(
-                "flex-1"
-            )
+            owner_input = ui.input(
+                label="Owner",
+                placeholder="e.g., torvalds"
+            ).classes("flex-1")
+
             repo_input = ui.input(
-                label="Repository", placeholder="e.g., linux"
+                label="Repository",
+                placeholder="e.g., linux"
             ).classes("flex-1")
 
             ui.button("Add Repository", on_click=add_source).props(
@@ -115,5 +109,6 @@ async def comparison_page(
                 state, "is_loading_source"
             )
 
+    # Comparison components
     repos_graph_component(state["repos_info"].values())
     repos_table_component(on_remove=remove_source)
