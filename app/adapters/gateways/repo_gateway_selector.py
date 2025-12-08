@@ -7,8 +7,8 @@ GatewayCallable = Callable[[str, str], RepoPort]
 
 
 class RepoGatewaySelector:
-    def __init__(self, gateways_map: dict[str, GatewayCallable] = {}) -> None:
-        self.__gateways_map = gateways_map
+    def __init__(self, **providers) -> None:
+        self.__gateways_map = providers
 
     @property
     def providers(self) -> list[str]:

@@ -1,11 +1,12 @@
 from datetime import datetime
-from pydantic import BaseModel, computed_field
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, computed_field, Field, field_validator
 
 
 __all__ = [
     "RepoSummaryEntity",
     "RepoSourceEntity",
+    "RepoTimeseriesEntity",
+    "TimeseriesDataPoint",
 ]
 
 
@@ -46,3 +47,25 @@ class RepoSummaryEntity(RepoSourceEntity):
         oldest_date = datetime.strptime(self.oldest_pr, "%Y-%m-%d")
         delta = datetime.now() - oldest_date
         return delta.days
+
+
+class TimeseriesDataPoint(BaseModel):
+    date: str = Field(description="Date in YYYY-MM-DD format")
+    value: int = Field(description="Metric value at this date")
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def _validate_date(cls, v) -> str:
+        if isinstance(v, datetime):
+            return v.strftime("%Y-%m-%d")
+        return v
+
+
+class RepoTimeseriesEntity(RepoSourceEntity):
+    open_prs: list[TimeseriesDataPoint] = Field(
+        description="Timeseries of open pull requests"
+    )
+    closed_prs: list[TimeseriesDataPoint] = Field(
+        description="Timeseries of closed pull requests"
+    )
+    users: list[TimeseriesDataPoint] = Field(description="Timeseries of contributors")

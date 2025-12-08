@@ -1,20 +1,19 @@
-from app.adapters.gateways.repo_gateway_selector import RepoGatewaySelector
 from app.domain import RepoSummaryEntity
 from app.domain.entities.repo import RepoSourceEntity
+from dependency_injector.providers import Aggregate
 
-__all__ = ["GetRepoSummaryUseCase"]
+from app.use_cases.ports.repo_port import RepoPort
 
 
 class GetRepoSummaryUseCase:
-    def __init__(self, gateway_selector: RepoGatewaySelector):
+    def __init__(self, gateway_selector: Aggregate[RepoPort]):
         self.__selector = gateway_selector
 
     def execute(self, source: RepoSourceEntity) -> RepoSummaryEntity:
-        gateway_factory = self.__selector.select_gateway(source.provider)
-        if not gateway_factory:
+        if source.provider not in self.__selector.providers:
             raise ValueError("Unsupported provider")
 
-        gateway = gateway_factory(source.owner, source.repo)
+        gateway = self.__selector(source.provider, source.owner, source.repo)
 
         return RepoSummaryEntity(
             open_prs=gateway.get_open_pull_requests_count(),

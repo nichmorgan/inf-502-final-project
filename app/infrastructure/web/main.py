@@ -1,5 +1,13 @@
+import logging
 from nicegui import ui
 from app.containers import Container
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
+)
 
 
 def main() -> None:
@@ -17,7 +25,7 @@ def main() -> None:
     ui.run(
         root=comparison_page,
         title="Repository Comparison",
-        port=5000,
+        port=5001,
     )
 
 
