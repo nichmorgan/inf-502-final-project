@@ -4,6 +4,7 @@ from typing import Annotated
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends
 from nicegui import app, events, run, ui
+from pydantic import ValidationError
 
 from app.containers import Container
 from app.domain.dto import RepoSourceEntity
@@ -53,13 +54,26 @@ async def comparison_page(
     async def add_source(event: events.ClickEventArguments) -> None:
         nonlocal repo_ids
 
+        provider = provider_select.value or ""
+
+        owner = owner_input.value.strip()
+        repo = repo_input.value.strip()
+
         cache["is_loading"] = True
 
-        source = RepoSourceEntity(
-            provider=provider_select.value or "",
-            owner=owner_input.value.strip(),
-            repo=repo_input.value.strip(),
-        )
+        try:
+            source = RepoSourceEntity(
+                provider=provider,
+                owner=owner,
+                repo=repo,
+            )
+        except ValidationError as e:
+            errors = e.errors(
+                include_url=False, include_context=False, include_input=False
+            )
+            ui.notify(errors, type="warning", multi_line=True)
+            cache["is_loading"] = False
+            return
 
         if new_info := await run.io_bound(get_new_repo_info, source):
             cache["repos"][new_info.id] = new_info.full_name
@@ -87,6 +101,8 @@ async def comparison_page(
     # Page header
     ui.label("Repository Comparison").classes("text-3xl font-bold mb-4")
 
+    input_validations = {"Too short!": lambda v: len(v) > 0}
+
     # Input form
     with ui.card().classes("w-full mb-6"):
         ui.label("Add Repository").classes("text-xl font-semibold mb-2")
@@ -103,13 +119,21 @@ async def comparison_page(
             )
 
             owner_input = (
-                ui.input(label="Owner", placeholder="e.g., torvalds")
+                ui.input(
+                    label="Owner",
+                    placeholder="e.g., torvalds",
+                    validation=input_validations,
+                )
                 .classes("flex-1")
                 .mark("owner_input")
             )
 
             repo_input = (
-                ui.input(label="Repository", placeholder="e.g., linux")
+                ui.input(
+                    label="Repository",
+                    placeholder="e.g., linux",
+                    validation=input_validations,
+                )
                 .classes("flex-1")
                 .mark("repo_input")
             )

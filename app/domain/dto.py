@@ -1,10 +1,10 @@
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 
 class RepoSourceEntity(BaseModel):
-    provider: str
-    owner: str
-    repo: str
+    provider: str = Field(min_length=1)
+    owner: str = Field(min_length=1)
+    repo: str = Field(min_length=1)
 
     @computed_field
     @property

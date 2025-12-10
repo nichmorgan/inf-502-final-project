@@ -1,6 +1,5 @@
-"""Configuration for all tests."""
-
-import pytest
-
-# Enable NiceGUI testing plugin
-pytest_plugins = ["nicegui.testing.user_plugin"]
+pytest_plugins = [
+    "nicegui.testing.user_plugin",
+    "tests.fixtures",
+    "tests.mocks",
+]
