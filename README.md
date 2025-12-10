@@ -68,6 +68,14 @@ To reduce GitHub API calls and improve performance, the application uses a **pic
 
 This significantly reduces API rate limit consumption for frequently accessed repositories.
 
+## Screenshots
+
+### Repository Summary
+![Repository Summary](.assets/summary.png)
+
+### Time Series Analysis
+![Time Series Analysis](.assets/timeseries.png)
+
 ## Architecture
 
 Built with Clean Architecture principles.

@@ -67,7 +67,7 @@ class PickleStorage(
         return list(ids)
 
     async def create_one(self, entity: TCreate) -> TModel:
-        new_id = len(self.__state) + 1
+        new_id = max(self.__state.keys(), default=0) + 1
         new_entity = self.__model(id=new_id, **entity.model_dump())
         self.__state[new_id] = new_entity
 
