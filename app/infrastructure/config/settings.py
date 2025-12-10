@@ -1,7 +1,6 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
-__all__ = ["Settings"]
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -10,3 +9,5 @@ class Settings(BaseSettings):
     )
 
     GITHUB_TOKEN: str
+    STORAGE_FOLDER: str = ".storage/"
+    CACHE_TTL_SECONDS: int = 60 * 60

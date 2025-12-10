@@ -1,4 +1,5 @@
 """Configuration for all tests."""
+
 import pytest
 
 # Enable NiceGUI testing plugin

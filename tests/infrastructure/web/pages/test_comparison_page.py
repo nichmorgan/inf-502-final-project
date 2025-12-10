@@ -87,7 +87,9 @@ async def test_add_repository_with_valid_data(user: User, mock_container):
 
 
 @pytest.mark.asyncio
-async def test_add_repository_shows_error_on_exception(user: User, mock_container, mocker: MockerFixture):
+async def test_add_repository_shows_error_on_exception(
+    user: User, mock_container, mocker: MockerFixture
+):
     """Test that adding a repository shows an error when an exception occurs."""
     # Make the use case raise an exception
     mock_summary_use_case = mock_container.get_repo_summary_use_case()
@@ -107,7 +109,9 @@ async def test_add_repository_shows_error_on_exception(user: User, mock_containe
 
 
 @pytest.mark.asyncio
-async def test_integration_add_repository_without_mocks(user: User, mocker: MockerFixture):
+async def test_integration_add_repository_without_mocks(
+    user: User, mocker: MockerFixture
+):
     """Integration test that uses the real container and mocks only the GitHub API."""
     # Mock the GitHub API repository responses
     mock_gh_repo = mocker.MagicMock()
@@ -141,6 +145,7 @@ async def test_integration_add_repository_without_mocks(user: User, mocker: Mock
 
     # Wait for async operations to complete
     import asyncio
+
     await asyncio.sleep(2)
 
     # The operation should complete successfully with the fix

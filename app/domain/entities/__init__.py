@@ -1,1 +1,6 @@
-from app.domain.entities.repo import *
+from .repo import RepoInfoEntity, TimeseriesDataPoint
+
+__all__ = [
+    "RepoInfoEntity",
+    "TimeseriesDataPoint",
+]

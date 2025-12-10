@@ -1,20 +1,32 @@
-from nicegui import ui
-from app.domain.entities.repo import RepoTimeseriesEntity
+from typing import Annotated
 
-__all__ = ["repos_timeseries_component"]
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+from nicegui import run, ui
+
+from app.containers import Container
+from app.domain import entities
+from app.use_cases.get_repo_info_by_id import GetRepoInfoByIdUseCase
 
 
 @ui.refreshable
-def repos_timeseries_component(
-    timeseries_list: list[RepoTimeseriesEntity],
+@inject
+async def repos_timeseries_component(
+    info_ids: list[int],
+    *,
+    get_repo_info_by_id: Annotated[
+        GetRepoInfoByIdUseCase, Depends(Provide[Container.get_repo_info_by_id_use_case])
+    ],
 ) -> None:
     """Component to display timeseries graphs for multiple repositories."""
 
-    if not timeseries_list:
-        ui.label("No repositories added yet. Add repositories using the form above.").classes(
-            "text-gray-500 text-center w-full"
-        )
+    if not info_ids:
+        ui.label(
+            "No repositories added yet. Add repositories using the form above."
+        ).classes("text-gray-500 text-center w-full")
         return
+
+    timeseries_list = await run.cpu_bound(get_repo_info_by_id.execute_sync, info_ids)
 
     with ui.column().classes("w-full gap-4"):
         # Open PRs Timeseries
@@ -43,7 +55,7 @@ def repos_timeseries_component(
 
 
 def _create_timeseries_chart(
-    timeseries_list: list[RepoTimeseriesEntity],
+    timeseries_list: list[entities.RepoInfoEntity],
     metric_key: str,
     title: str,
     y_axis_title: str,

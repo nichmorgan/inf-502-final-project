@@ -1,46 +1,59 @@
-from dependency_injector.wiring import inject, Provide
-from nicegui import ui, events, run
+import asyncio
 from typing import Annotated
+
+from dependency_injector.wiring import Provide, inject
 from fastapi import Depends
+from nicegui import app, events, run, ui
+
 from app.containers import Container
-from app.domain.entities.repo import RepoSourceEntity
+from app.domain.dto import RepoSourceEntity
+from app.domain.entities import RepoInfoEntity
 from app.domain.enums import RepoProvider
-from app.infrastructure.web.components.repos_graph import repos_graph_component
-from app.infrastructure.web.components.repos_table import repos_table_component
-from app.infrastructure.web.components.repos_timeseries import (
+from app.infrastructure.web.components import (
+    repos_graph_component,
+    repos_table_component,
     repos_timeseries_component,
 )
-from app.use_cases.get_repo_summary import GetRepoSummaryUseCase
-from app.use_cases.get_repo_timeseries import GetRepoTimeseriesUseCase
-
-__all__ = ["comparison_page"]
+from app.use_cases import GetRepoInfoBySourceUseCase
 
 
 @ui.page("/")
 @inject
 async def comparison_page(
-    summary_use_case: Annotated[
-        GetRepoSummaryUseCase, Depends(Provide[Container.get_repo_summary_use_case])
-    ],
-    timeseries_use_case: Annotated[
-        GetRepoTimeseriesUseCase,
-        Depends(Provide[Container.get_repo_timeseries_use_case]),
+    get_repo_info_by_source: Annotated[
+        GetRepoInfoBySourceUseCase,
+        Depends(Provide[Container.get_repo_info_by_source_use_case]),
     ],
 ) -> None:
     """Create and render the repository comparison page."""
 
+    await ui.context.client.connected()
+
     # Initialize state
-    state = {
-        "repos_info": {},
-        "repos_timeseries": {},
-        "is_loading_source": False,
-    }
+    cache = app.storage.tab
+    cache.setdefault("repos", {})
+    cache.setdefault("is_loading", False)
+
+    repo_ids = list(cache["repos"].keys())
 
     available_providers = list(RepoProvider)
 
+    def get_new_repo_info(source: RepoSourceEntity) -> RepoInfoEntity | None:
+        if source.full_name in cache["repos"].values():
+            ui.notify("Repository is already included")
+            return
+
+        info = asyncio.run(get_repo_info_by_source.execute(source))
+        if not info.id:
+            ui.notify("Id was expected after get new repo info", type="negative")
+            return
+
+        return info
+
     async def add_source(event: events.ClickEventArguments) -> None:
-        """Add a repository to the comparison table."""
-        state["is_loading_source"] = True
+        nonlocal repo_ids
+
+        cache["is_loading"] = True
 
         source = RepoSourceEntity(
             provider=provider_select.value or "",
@@ -48,46 +61,28 @@ async def comparison_page(
             repo=repo_input.value.strip(),
         )
 
-        if source.id in state["repos_info"]:
-            ui.notify("Repository already added", type="warning")
-        else:
-            try:
-                summary = await run.cpu_bound(summary_use_case.execute, source)
-                state["repos_info"][source.id] = summary
+        if new_info := await run.io_bound(get_new_repo_info, source):
+            cache["repos"][new_info.id] = new_info.full_name
+            repo_ids = list(cache["repos"].keys())
+            await repos_table_component.refresh(repo_ids)
+            await repos_graph_component.refresh(repo_ids)
+            await repos_timeseries_component.refresh(repo_ids)
 
-                timeseries = await run.cpu_bound(timeseries_use_case.execute, source)
-                state["repos_timeseries"][source.id] = timeseries
-
-                await repos_table_component.refresh(state["repos_info"].values())
-                await repos_graph_component.refresh(state["repos_info"].values())
-                await repos_timeseries_component.refresh(
-                    state["repos_timeseries"].values()
-                )
-
-                ui.notify(f"Added {source.id}", type="positive")
-
-            except ValueError as e:
-                if "Unsupported URL" in str(e):
-                    ui.notify(
-                        f"Provider '{source.provider}' is not supported",
-                        type="negative",
-                    )
-                else:
-                    ui.notify(f"Error: {str(e)}", type="negative")
-            except Exception as e:
-                ui.notify(f"Error fetching repository data: {str(e)}", type="negative")
-
-        state["is_loading_source"] = False
+        cache["is_loading"] = False
 
     async def remove_source(event: events.GenericEventArguments) -> None:
-        """Remove a repository from the comparison."""
-        repo_id = event.args
-        del state["repos_info"][repo_id]
-        del state["repos_timeseries"][repo_id]
+        nonlocal repo_ids
 
-        await repos_table_component.refresh(state["repos_info"].values())
-        await repos_graph_component.refresh(state["repos_info"].values())
-        await repos_timeseries_component.refresh(state["repos_timeseries"].values())
+        id_to_delete = event.args
+        if id_to_delete not in cache["repos"]:
+            return
+
+        del cache["repos"][id_to_delete]
+
+        repo_ids = list(cache["repos"].keys())
+        await repos_table_component.refresh(repo_ids)
+        await repos_graph_component.refresh(repo_ids)
+        await repos_timeseries_component.refresh(repo_ids)
 
     # Page header
     ui.label("Repository Comparison").classes("text-3xl font-bold mb-4")
@@ -122,16 +117,14 @@ async def comparison_page(
             ui.button("Add Repository", on_click=add_source).props(
                 "color=primary"
             ).bind_enabled_from(
-                state, "is_loading_source", lambda v: not v
+                cache, "is_loading", lambda v: not v
             ).bind_visibility_from(
-                state, "is_loading_source", lambda v: not v
+                cache, "is_loading", lambda v: not v
             ).mark(
                 "add_repository_button"
             )
 
-            ui.spinner().classes("ml-2").bind_visibility_from(
-                state, "is_loading_source"
-            )
+            ui.spinner().classes("ml-2").bind_visibility_from(cache, "is_loading")
 
     # Tabs for different views
     with ui.tabs().classes("w-full") as tabs:
@@ -141,9 +134,11 @@ async def comparison_page(
     with ui.tab_panels(tabs, value=summary_tab).classes("w-full"):
         # Summary Tab
         with ui.tab_panel(summary_tab):
-            repos_graph_component(state["repos_info"].values())
-            repos_table_component(on_remove=remove_source)
+            await repos_graph_component(repo_ids)  # type: ignore
 
         # Timeseries Tab
         with ui.tab_panel(timeseries_tab):
-            repos_timeseries_component(state["repos_timeseries"].values())
+            await repos_timeseries_component(repo_ids)  # type: ignore
+
+    with ui.column().classes("w-full mt-6"):
+        await repos_table_component(repo_ids, on_remove=remove_source)  # type: ignore

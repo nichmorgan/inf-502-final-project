@@ -1,11 +1,15 @@
-from nicegui import ui, events
+from typing import Annotated
 
-from app.domain.entities.repo import RepoSummaryEntity
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+from nicegui import events, run, ui
 
-__all__ = ["repos_table_component"]
+from app.containers import Container
+from app.domain import entities
+from app.use_cases.get_repo_info_by_id import GetRepoInfoByIdUseCase
 
 
-def repo_info_to_raw_table_component(info_list: list[RepoSummaryEntity]):
+def repo_info_to_raw_table_component(info_list: list[entities.RepoInfoEntity]):
     columns = [
         {
             "name": "provider",
@@ -28,13 +32,13 @@ def repo_info_to_raw_table_component(info_list: list[RepoSummaryEntity]):
         {
             "name": "open_prs",
             "label": "Open PRs",
-            "field": "open_prs",
+            "field": "open_prs_count",
             "align": "center",
         },
         {
             "name": "closed_prs",
             "label": "Closed PRs",
-            "field": "closed_prs",
+            "field": "closed_prs_count",
             "align": "center",
         },
         {
@@ -46,7 +50,7 @@ def repo_info_to_raw_table_component(info_list: list[RepoSummaryEntity]):
         {
             "name": "users",
             "label": "Contributors",
-            "field": "users",
+            "field": "users_count",
             "align": "center",
         },
         {
@@ -57,10 +61,22 @@ def repo_info_to_raw_table_component(info_list: list[RepoSummaryEntity]):
         },
     ]
 
+    include_fields = {
+        "provider",
+        "owner",
+        "repo",
+        "open_prs_count",
+        "closed_prs_count",
+    }
+
     rows = [
         {
-            **info.model_dump(exclude={"id", "oldest_pr"}),
-            "oldest_pr": info.oldest_pr or "N/A",
+            **info.model_dump(include=include_fields),
+            "oldest_pr": (
+                f"{info.days_since_oldest_pr } days"
+                if info.days_since_oldest_pr is not None
+                else "N/A"
+            ),
             "actions": info.id,
         }
         for info in info_list
@@ -70,13 +86,23 @@ def repo_info_to_raw_table_component(info_list: list[RepoSummaryEntity]):
 
 
 @ui.refreshable
-def repos_table_component(
-    repos: list[RepoSummaryEntity] = [],
+@inject
+async def repos_table_component(
+    source_ids: list[int],
     *,
+    get_repo_info_by_id: Annotated[
+        GetRepoInfoByIdUseCase, Depends(Provide[Container.get_repo_info_by_id_use_case])
+    ],
     title: str = "Comparison Table",
     empty_message: str = "No repositories added yet. Add repositories using the form above.",
     on_remove: events.Handler[events.GenericEventArguments] | None = None,
 ):
+    repos = (
+        await run.cpu_bound(get_repo_info_by_id.execute_sync, source_ids)
+        if source_ids
+        else []
+    )
+
     with ui.card().classes("w-full"):
         ui.label(title).classes("text-xl font-semibold mb-4")
         with ui.column().classes("w-full"):

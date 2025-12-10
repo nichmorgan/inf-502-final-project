@@ -1,21 +1,20 @@
-import logging
 from nicegui import ui
-from app.containers import Container
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%H:%M:%S",
-)
+from app.containers import Container
 
 
 def main() -> None:
     """Main entry point for the application."""
     # Initialize container
-    container = Container()
+    container = Container.default()
+
     container.wire(
-        modules=["app.infrastructure.web.pages.comparison"],
+        modules=[
+            "app.infrastructure.web.pages.comparison",
+            "app.infrastructure.web.components.repos_graph",
+            "app.infrastructure.web.components.repos_table",
+            "app.infrastructure.web.components.repos_timeseries",
+        ],
         warn_unresolved=True,
     )
 
@@ -26,6 +25,8 @@ def main() -> None:
         root=comparison_page,
         title="Repository Comparison",
         port=5001,
+        reload=False,
+        show=False,
     )
 
 

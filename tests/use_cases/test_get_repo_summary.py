@@ -5,7 +5,7 @@ from pytest_mock import MockerFixture
 
 from app.domain import RepoSummaryEntity
 from app.domain.entities.repo import RepoSourceEntity
-from app.use_cases import GetRepoSummaryUseCase
+from app.use_cases import GetRepoInfoUseCase
 from app.use_cases.ports.repo_port import RepoPort
 
 
@@ -37,11 +37,11 @@ def mock_gateway_selector(
 
 @pytest.fixture
 def use_case(mock_gateway_selector):
-    return GetRepoSummaryUseCase(gateway_selector=mock_gateway_selector)
+    return GetRepoInfoUseCase(gateway_selector=mock_gateway_selector)
 
 
 def test_execute_with_all_data(
-    use_case: GetRepoSummaryUseCase,
+    use_case: GetRepoInfoUseCase,
     mock_gateway_selector: MockerFixture,
     mock_gateway_instance: MockerFixture,
     mock_gateway_class: MockerFixture,
@@ -83,7 +83,7 @@ def test_execute_with_all_data(
 
 
 def test_execute_with_no_oldest_pr_date(
-    use_case: GetRepoSummaryUseCase,
+    use_case: GetRepoInfoUseCase,
     mock_gateway_instance: MockerFixture,
 ):
     # Arrange
@@ -110,7 +110,7 @@ def test_execute_with_no_oldest_pr_date(
 
 
 def test_execute_with_zero_counts(
-    use_case: GetRepoSummaryUseCase,
+    use_case: GetRepoInfoUseCase,
     mock_gateway_instance: MockerFixture,
 ):
     # Arrange
@@ -137,7 +137,7 @@ def test_execute_with_zero_counts(
 
 
 def test_execute_with_large_numbers(
-    use_case: GetRepoSummaryUseCase,
+    use_case: GetRepoInfoUseCase,
     mock_gateway_instance: MockerFixture,
 ):
     # Arrange
@@ -165,7 +165,7 @@ def test_execute_with_large_numbers(
 
 
 def test_execute_gateway_interaction_order(
-    use_case: GetRepoSummaryUseCase,
+    use_case: GetRepoInfoUseCase,
     mock_gateway_instance: MockerFixture,
 ):
     # Arrange
@@ -202,7 +202,7 @@ def test_execute_gateway_interaction_order(
 
 
 def test_execute_raises_error_for_unsupported_provider(
-    use_case: GetRepoSummaryUseCase,
+    use_case: GetRepoInfoUseCase,
     mock_gateway_selector: MockerFixture,
 ):
     # Arrange
@@ -220,7 +220,7 @@ def test_execute_raises_error_for_unsupported_provider(
 
 
 def test_execute_creates_correct_entity_hierarchy(
-    use_case: GetRepoSummaryUseCase,
+    use_case: GetRepoInfoUseCase,
     mock_gateway_instance: MockerFixture,
 ):
     # Arrange
