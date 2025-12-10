@@ -82,7 +82,9 @@ async def test_execute_refreshes_stale_cache(
 ):
     """Test that use case refreshes stale cache."""
     # Arrange
-    source = dto.RepoSourceEntity(provider="github", owner="test_owner", repo="test_repo")
+    source = dto.RepoSourceEntity(
+        provider="github", owner="test_owner", repo="test_repo"
+    )
 
     # Create a stale cached entity (TTL is 3600 seconds = 1 hour)
     # To make it stale: (updated_at or now()) - created_at >= 3600
@@ -125,7 +127,9 @@ async def test_fill_timeseries_with_data(
 ):
     """Test that timeseries data is properly filled."""
     # Arrange
-    source = dto.RepoSourceEntity(provider="github", owner="test_owner", repo="test_repo")
+    source = dto.RepoSourceEntity(
+        provider="github", owner="test_owner", repo="test_repo"
+    )
     mock_storage.get_many.return_value = []
 
     # Act
@@ -139,7 +143,9 @@ async def test_fill_timeseries_with_data(
 
 
 @pytest.mark.asyncio
-async def test_fill_timeseries_with_empty_data(mock_gateway_selector, mock_storage, mock_gateway):
+async def test_fill_timeseries_with_empty_data(
+    mock_gateway_selector, mock_storage, mock_gateway
+):
     """Test fill_timeseries with empty timeseries data."""
     # Arrange
     mock_gateway.get_timeseries_open_pull_requests.return_value = {}
@@ -152,7 +158,9 @@ async def test_fill_timeseries_with_empty_data(mock_gateway_selector, mock_stora
         time_to_live_seconds=3600,
     )
 
-    source = dto.RepoSourceEntity(provider="github", owner="test_owner", repo="test_repo")
+    source = dto.RepoSourceEntity(
+        provider="github", owner="test_owner", repo="test_repo"
+    )
     mock_storage.get_many.return_value = []
 
     # Act

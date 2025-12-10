@@ -4,4 +4,7 @@ fmt:
 web:
 	uv run python -m app.infrastructure.web.main
 
-.PHONY: fmt web
+test:
+	uv run pytest --cov
+
+.PHONY: fmt web test

@@ -18,7 +18,9 @@ def github_gateway(mock_github_client: MockerFixture):
     return GithubGateway(client=mock_github_client)
 
 
-def create_mock_pr(mocker: MockerFixture, created_at: datetime, closed_at: datetime | None = None):
+def create_mock_pr(
+    mocker: MockerFixture, created_at: datetime, closed_at: datetime | None = None
+):
     """Helper to create a mock PR object."""
     mock_pr = mocker.MagicMock()
     mock_pr.created_at = created_at
@@ -36,7 +38,9 @@ def create_mock_commit(mocker: MockerFixture, author_login: str, commit_date: da
 
 @pytest.mark.asyncio
 async def test_get_timeseries_open_pull_requests_no_prs(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test getting timeseries for open PRs when there are no PRs."""
     # Arrange
@@ -50,6 +54,7 @@ async def test_get_timeseries_open_pull_requests_no_prs(
 
     # Setup side effect to return different values for different calls
     call_count = [0]
+
     def get_pulls_side_effect(*args, **kwargs):
         call_count[0] += 1
         if call_count[0] == 1:  # First call for oldest PR
@@ -62,7 +67,9 @@ async def test_get_timeseries_open_pull_requests_no_prs(
     mock_repo.get_pulls.side_effect = get_pulls_side_effect
 
     # Act
-    result = await github_gateway.get_timeseries_open_pull_requests(owner=owner, repo=repo)
+    result = await github_gateway.get_timeseries_open_pull_requests(
+        owner=owner, repo=repo
+    )
 
     # Assert
     assert result == {}
@@ -70,7 +77,9 @@ async def test_get_timeseries_open_pull_requests_no_prs(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_open_pull_requests_with_prs(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test getting timeseries for open PRs with actual PRs."""
     # Arrange
@@ -81,11 +90,15 @@ async def test_get_timeseries_open_pull_requests_with_prs(
     # Create mock PRs
     now = datetime.now(timezone.utc)
     pr1 = create_mock_pr(mocker, created_at=now - timedelta(days=30), closed_at=None)
-    pr2 = create_mock_pr(mocker, created_at=now - timedelta(days=20), closed_at=now - timedelta(days=10))
+    pr2 = create_mock_pr(
+        mocker, created_at=now - timedelta(days=20), closed_at=now - timedelta(days=10)
+    )
     pr3 = create_mock_pr(mocker, created_at=now - timedelta(days=10), closed_at=None)
 
     # Mock oldest PR
-    oldest_pr = create_mock_pr(mocker, created_at=now - timedelta(days=30), closed_at=None)
+    oldest_pr = create_mock_pr(
+        mocker, created_at=now - timedelta(days=30), closed_at=None
+    )
     mock_repo.get_pulls.return_value.get_page.return_value = [oldest_pr]
 
     # Mock get_pulls for timeseries
@@ -94,6 +107,7 @@ async def test_get_timeseries_open_pull_requests_with_prs(
 
     # Setup side effect to return different values for different calls
     call_count = [0]
+
     def get_pulls_side_effect(*args, **kwargs):
         call_count[0] += 1
         if call_count[0] == 1:  # First call for oldest PR
@@ -106,7 +120,9 @@ async def test_get_timeseries_open_pull_requests_with_prs(
     mock_repo.get_pulls.side_effect = get_pulls_side_effect
 
     # Act
-    result = await github_gateway.get_timeseries_open_pull_requests(owner=owner, repo=repo)
+    result = await github_gateway.get_timeseries_open_pull_requests(
+        owner=owner, repo=repo
+    )
 
     # Assert
     assert isinstance(result, dict)
@@ -115,7 +131,9 @@ async def test_get_timeseries_open_pull_requests_with_prs(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_open_pull_requests_with_oldest_pr(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test timeseries uses oldest PR date when available."""
     # Arrange
@@ -136,6 +154,7 @@ async def test_get_timeseries_open_pull_requests_with_oldest_pr(
     mock_pulls_for_timeseries.__iter__.return_value = iter([pr1])
 
     call_count = [0]
+
     def get_pulls_side_effect(*args, **kwargs):
         call_count[0] += 1
         if call_count[0] == 1:
@@ -148,7 +167,9 @@ async def test_get_timeseries_open_pull_requests_with_oldest_pr(
     mock_repo.get_pulls.side_effect = get_pulls_side_effect
 
     # Act
-    result = await github_gateway.get_timeseries_open_pull_requests(owner=owner, repo=repo)
+    result = await github_gateway.get_timeseries_open_pull_requests(
+        owner=owner, repo=repo
+    )
 
     # Assert
     assert isinstance(result, dict)
@@ -156,7 +177,9 @@ async def test_get_timeseries_open_pull_requests_with_oldest_pr(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_closed_pull_requests_empty(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test getting timeseries for closed PRs when there are no closed PRs."""
     # Arrange
@@ -172,6 +195,7 @@ async def test_get_timeseries_closed_pull_requests_empty(
     mock_pulls_result.__getitem__.return_value = []
 
     call_count = [0]
+
     def get_pulls_side_effect(*args, **kwargs):
         call_count[0] += 1
         if call_count[0] == 1:  # First call for oldest PR
@@ -184,7 +208,9 @@ async def test_get_timeseries_closed_pull_requests_empty(
     mock_repo.get_pulls.side_effect = get_pulls_side_effect
 
     # Act
-    result = await github_gateway.get_timeseries_closed_pull_requests(owner=owner, repo=repo)
+    result = await github_gateway.get_timeseries_closed_pull_requests(
+        owner=owner, repo=repo
+    )
 
     # Assert
     assert result == {}
@@ -192,7 +218,9 @@ async def test_get_timeseries_closed_pull_requests_empty(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_closed_pull_requests_with_prs(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test getting timeseries for closed PRs with actual closed PRs."""
     # Arrange
@@ -204,24 +232,23 @@ async def test_get_timeseries_closed_pull_requests_with_prs(
 
     # Create closed PRs
     pr1 = create_mock_pr(
-        mocker,
-        created_at=now - timedelta(days=30),
-        closed_at=now - timedelta(days=25)
+        mocker, created_at=now - timedelta(days=30), closed_at=now - timedelta(days=25)
     )
     pr2 = create_mock_pr(
-        mocker,
-        created_at=now - timedelta(days=20),
-        closed_at=now - timedelta(days=15)
+        mocker, created_at=now - timedelta(days=20), closed_at=now - timedelta(days=15)
     )
 
     # Mock oldest PR
-    oldest_pr = create_mock_pr(mocker, created_at=now - timedelta(days=30), closed_at=None)
+    oldest_pr = create_mock_pr(
+        mocker, created_at=now - timedelta(days=30), closed_at=None
+    )
 
     # Mock get_pulls for closed PRs
     mock_pulls_result = mocker.MagicMock()
     mock_pulls_result.__getitem__.return_value = [pr1, pr2]
 
     call_count = [0]
+
     def get_pulls_side_effect(*args, **kwargs):
         call_count[0] += 1
         if call_count[0] == 1:  # First call for oldest PR
@@ -234,7 +261,9 @@ async def test_get_timeseries_closed_pull_requests_with_prs(
     mock_repo.get_pulls.side_effect = get_pulls_side_effect
 
     # Act
-    result = await github_gateway.get_timeseries_closed_pull_requests(owner=owner, repo=repo)
+    result = await github_gateway.get_timeseries_closed_pull_requests(
+        owner=owner, repo=repo
+    )
 
     # Assert
     assert isinstance(result, dict)
@@ -243,7 +272,9 @@ async def test_get_timeseries_closed_pull_requests_with_prs(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_users_empty(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test getting timeseries for users when there are no commits."""
     # Arrange
@@ -266,7 +297,9 @@ async def test_get_timeseries_users_empty(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_users_with_commits(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test getting timeseries for users with actual commits."""
     # Arrange
@@ -277,7 +310,9 @@ async def test_get_timeseries_users_with_commits(
     now = datetime.now(timezone.utc)
 
     # Mock oldest PR
-    oldest_pr = create_mock_pr(mocker, created_at=now - timedelta(days=30), closed_at=None)
+    oldest_pr = create_mock_pr(
+        mocker, created_at=now - timedelta(days=30), closed_at=None
+    )
     mock_repo.get_pulls.return_value.get_page.return_value = [oldest_pr]
 
     # Create mock commits with authors
@@ -298,7 +333,9 @@ async def test_get_timeseries_users_with_commits(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_users_with_limit(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test that users timeseries respects MAX_COMMITS limit."""
     # Arrange
@@ -309,7 +346,9 @@ async def test_get_timeseries_users_with_limit(
     now = datetime.now(timezone.utc)
 
     # Mock oldest PR
-    oldest_pr = create_mock_pr(mocker, created_at=now - timedelta(days=300), closed_at=None)
+    oldest_pr = create_mock_pr(
+        mocker, created_at=now - timedelta(days=300), closed_at=None
+    )
     mock_repo.get_pulls.return_value.get_page.return_value = [oldest_pr]
 
     # Create 250 mock commits (more than MAX_COMMITS=200)
@@ -350,7 +389,9 @@ async def test_get_timeseries_users_with_limit(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_users_filters_by_date_range(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test that users timeseries only includes commits within date range."""
     # Arrange
@@ -361,13 +402,21 @@ async def test_get_timeseries_users_filters_by_date_range(
     now = datetime.now(timezone.utc)
 
     # Mock oldest PR from 10 days ago
-    oldest_pr = create_mock_pr(mocker, created_at=now - timedelta(days=10), closed_at=None)
+    oldest_pr = create_mock_pr(
+        mocker, created_at=now - timedelta(days=10), closed_at=None
+    )
     mock_repo.get_pulls.return_value.get_page.return_value = [oldest_pr]
 
     # Create commits, some within range, some outside
-    commit1 = create_mock_commit(mocker, "user1", now - timedelta(days=5))  # Within range
-    commit2 = create_mock_commit(mocker, "user2", now - timedelta(days=400))  # Outside range
-    commit3 = create_mock_commit(mocker, "user3", now - timedelta(days=8))  # Within range
+    commit1 = create_mock_commit(
+        mocker, "user1", now - timedelta(days=5)
+    )  # Within range
+    commit2 = create_mock_commit(
+        mocker, "user2", now - timedelta(days=400)
+    )  # Outside range
+    commit3 = create_mock_commit(
+        mocker, "user3", now - timedelta(days=8)
+    )  # Within range
 
     mock_repo.get_commits.return_value = [commit1, commit2, commit3]
 
@@ -381,7 +430,9 @@ async def test_get_timeseries_users_filters_by_date_range(
 
 @pytest.mark.asyncio
 async def test_get_timeseries_users_handles_commits_without_author(
-    github_gateway: GithubGateway, mock_github_client: MockerFixture, mocker: MockerFixture
+    github_gateway: GithubGateway,
+    mock_github_client: MockerFixture,
+    mocker: MockerFixture,
 ):
     """Test that users timeseries handles commits without author gracefully."""
     # Arrange
@@ -392,7 +443,9 @@ async def test_get_timeseries_users_handles_commits_without_author(
     now = datetime.now(timezone.utc)
 
     # Mock oldest PR
-    oldest_pr = create_mock_pr(mocker, created_at=now - timedelta(days=30), closed_at=None)
+    oldest_pr = create_mock_pr(
+        mocker, created_at=now - timedelta(days=30), closed_at=None
+    )
     mock_repo.get_pulls.return_value.get_page.return_value = [oldest_pr]
 
     # Create commits with and without authors

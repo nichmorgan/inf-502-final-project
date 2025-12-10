@@ -110,5 +110,3 @@ def update_repo_info_schema_factory():
 def filter_repo_info_schema_factory():
     """Provide FilterRepoInfoSchema factory instance."""
     return FilterRepoInfoSchemaFactory()
-
-

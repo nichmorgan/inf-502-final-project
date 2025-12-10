@@ -10,4 +10,4 @@ class Settings(BaseSettings):
 
     GITHUB_TOKEN: str
     STORAGE_FOLDER: str = ".storage/"
-    CACHE_TTL_SECONDS: int = 60 * 60
+    CACHE_TTL_SECONDS: int = 60 * 60 * 24

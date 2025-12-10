@@ -31,5 +31,3 @@ class RepoSourceEntityFactory(ModelFactory[RepoSourceEntity]):
 def repo_source_factory():
     """Provide RepoSourceEntity factory instance."""
     return RepoSourceEntityFactory()
-
-

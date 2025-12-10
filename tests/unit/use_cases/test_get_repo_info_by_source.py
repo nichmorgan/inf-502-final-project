@@ -73,7 +73,9 @@ async def test_execute_fetches_from_gateway_when_not_in_storage(
 ):
     """Test that use case fetches from gateway when data is not in storage."""
     # Arrange
-    source = dto.RepoSourceEntity(provider="github", owner="test_owner", repo="test_repo")
+    source = dto.RepoSourceEntity(
+        provider="github", owner="test_owner", repo="test_repo"
+    )
     mock_storage.get_many.return_value = []
 
     # Act
@@ -102,7 +104,9 @@ async def test_execute_returns_from_storage_when_cache_valid(
 ):
     """Test that use case returns from storage when cache is valid."""
     # Arrange
-    source = dto.RepoSourceEntity(provider="github", owner="test_owner", repo="test_repo")
+    source = dto.RepoSourceEntity(
+        provider="github", owner="test_owner", repo="test_repo"
+    )
     cached_entity = entities.RepoInfoEntity(
         id=2,
         provider="github",
@@ -175,7 +179,9 @@ def test_execute_sync_calls_execute(
         time_to_live_seconds=3600,
     )
 
-    source = dto.RepoSourceEntity(provider="github", owner="test_owner", repo="test_repo")
+    source = dto.RepoSourceEntity(
+        provider="github", owner="test_owner", repo="test_repo"
+    )
 
     # Act
     result = use_case.execute_sync(source)
