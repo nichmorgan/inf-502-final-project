@@ -8,9 +8,7 @@
             "name": "Web",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/app/infrastructure/web/main.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
-        }
+            "module": "app.infrastructure.web.main"
+        },
     ]
 }

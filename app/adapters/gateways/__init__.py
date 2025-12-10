@@ -1,2 +1,5 @@
-from .github_gateway import *
-from .repo_gateway_selector import *
+from .github_gateway import GithubGateway
+
+__all__ = [
+    "GithubGateway",
+]
