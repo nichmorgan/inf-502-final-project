@@ -31,9 +31,8 @@ Detailed metrics in tabular format:
 
 ## User Interaction
 
-<div align="center">
-  <img src="../.assets/add-repo.gif" alt="Add Repository Demo" style="max-width: 100%; height: auto;">
-</div>
+![Add Repository Demo](../.assets/add-repo.mp4)
+
 
 **Add Repository**:
 1. Select provider (GitHub)

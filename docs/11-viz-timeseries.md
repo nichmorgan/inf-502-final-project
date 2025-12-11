@@ -65,9 +65,8 @@
 
 ## Toggle Between Views
 
-<div align="center">
-  <img src="../.assets/toggle-views.gif" alt="Toggle Tabs Demo" style="max-width: 100%; height: auto;">
-</div>
+![Toggle Tabs Demo](../.assets/toggle-views.mp4)
+
 
 **Summary** ↔️ **Time Series** tabs for different perspectives
 
