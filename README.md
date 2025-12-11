@@ -68,14 +68,25 @@ To reduce GitHub API calls and improve performance, the application uses a **pic
 
 This significantly reduces API rate limit consumption for frequently accessed repositories.
 
-## Screenshots
-
-### Repository Summary
-![Repository Summary](.assets/summary.png)
-
-### Time Series Analysis
-![Time Series Analysis](.assets/timeseries.png)
-
 ## Architecture
 
 Built with Clean Architecture principles.
+
+## Presentation
+
+This project was created for INF-502 Final Project. The presentation slides are available in the [`docs/`](docs/) directory:
+
+1. [Title & Introduction](docs/01-title.md)
+2. [Project Overview](docs/02-overview.md)
+3. [Use Case Selection](docs/03-use-case.md)
+4. [Architecture Overview](docs/04-architecture.md)
+5. [Data Collection](docs/05-data-collection.md)
+6. [GitHub API Rate Limits Challenge](docs/06-rate-limits.md)
+7. [Storage & Caching Strategy](docs/07-storage-caching.md)
+8. [Data Processing Challenges](docs/08-data-processing.md)
+9. [Analysis Implementation](docs/09-analysis.md)
+10. [Visualization: Summary View](docs/10-viz-summary.md)
+11. [Visualization: Time Series](docs/11-viz-timeseries.md)
+12. [Repository Comparison Insights](docs/12-insights.md)
+13. [Testing Strategy](docs/13-testing.md)
+14. [Conclusion & Takeaways](docs/14-conclusion.md)
