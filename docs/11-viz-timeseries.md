@@ -66,12 +66,8 @@
 ## Toggle Between Views
 
 <div align="center">
-  <video controls loop muted autoplay style="max-width: 100%; height: auto;">
-    <source src="../.assets/add-repo.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <img src="../.assets/toggle-views.gif" alt="Toggle Tabs Demo" style="max-width: 100%; height: auto;">
 </div>
-
 
 **Summary** ↔️ **Time Series** tabs for different perspectives
 

@@ -31,7 +31,9 @@ Detailed metrics in tabular format:
 
 ## User Interaction
 
-![Add Repository Demo](../.assets/add-repo.mp4)
+<div align="center">
+  <img src="../.assets/add-repo.gif" alt="Add Repository Demo" style="max-width: 100%; height: auto;">
+</div>
 
 
 **Add Repository**:
